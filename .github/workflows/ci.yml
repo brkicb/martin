@@ -19,8 +19,6 @@ jobs:
   build-and-push-ecr:
     name: Build and push Docker image to AWS ECR
     runs-on: ubuntu-latest
-    env:
-      AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
       - name: Checkout sources
@@ -31,9 +29,15 @@ jobs:
         with:
           install: true
 
+      - name: Configure AWS credentials
+        run: |
+          echo "Configuring AWS credentials"
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_REGION }}
+
       - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
